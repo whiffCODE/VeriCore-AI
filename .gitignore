@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment
+.env
+.env.*
+!.env.example
+!.env.local.example
+
+# Next.js
+.next/
+out/
+.vercel/
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+logs/
+
+# Runtime
+*.pid
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Uploaded files
+uploads/
+temp/
+tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Certificates / secrets
+*.pem
+*.key
+*.crt
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Misc
+*.local
