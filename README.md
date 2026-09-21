@@ -1,6 +1,6 @@
 # VeriCore AI
 
-https://res.cloudinary.com/fdwexjk4/image/upload/v1789891015/output-onlinegiftools.gif
+![logo](https://res.cloudinary.com/fdwexjk4/image/upload/v1789891015/output-onlinegiftools.gif)
 
 ## Context-Aware Corporate Knowledge Brain
 
@@ -23,7 +23,8 @@ grounded answers with source citations.
 
 ### Frontend
 
-- Next.js ![Next.js](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/nextjs-icon-dark-background.png)
+- Next.js
+- ![Next.js](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/nextjs-icon-dark-background.png)
 - React
 - TypeScript
 - Tailwind CSS
@@ -38,13 +39,18 @@ grounded answers with source citations.
 - Node.js ![Node.js](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/Node.js_logo.svg.webp)
 - Express.js
 - JavaScript ESM
-- MongoDB Atlas ![MongoDB Atlas](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010876/603c5eb831820c3ce6a8f057_603a1586fa052d17fc2a6929_MongoDBAtlas.png)
+- MongoDB Atlas
+- ![MongoDB Atlas](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010876/603c5eb831820c3ce6a8f057_603a1586fa052d17fc2a6929_MongoDBAtlas.png)
 - MongoDB Vector Search
 - Nodemailer
-- Razorpay ![Razorpay](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010659/razorpay-icon.webp)
-- Xenova Transformers ![Xenova Transformers](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/hwiQ0uvz3t-L5a-NtBIO6.webp)
-- Gemini ![Gemini](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/Gemini-2.5-Flash-Image-1024x576.webp)
-- Groq ![Groq](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/Llama-3.3-70B.webp)
+- Razorpay
+- ![Razorpay](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010659/razorpay-icon.webp)
+- Xenova Transformers
+- ![Xenova Transformers](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/hwiQ0uvz3t-L5a-NtBIO6.webp)
+- Gemini
+- ![Gemini](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/Gemini-2.5-Flash-Image-1024x576.webp)
+- Groq
+- ![Groq](https://res.cloudinary.com/fdwexjk4/image/upload/v1790010660/Llama-3.3-70B.webp)
 
 ### Deployment
 
