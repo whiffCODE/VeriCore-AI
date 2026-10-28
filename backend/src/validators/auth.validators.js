@@ -122,3 +122,12 @@ export const verifyEmailRecoverySchema = z.object({
   userId: z.string().trim().min(1).max(40),
   otp: z.string().regex(/^\d{6}$/),
 });
+
+
+export const accountDeletionRequestSchema = z.object({
+  password: z.string().min(1).max(72),
+});
+
+export const accountDeletionConfirmSchema = z.object({
+  otp: z.string().regex(/^\d{6}$/),
+});

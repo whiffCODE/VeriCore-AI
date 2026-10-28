@@ -5,8 +5,10 @@ import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
 
 import { env } from "./config/env.js";
+
 import authRoutes from "./routes/auth.routes.js";
 import sessionRoutes from "./routes/session.routes.js";
+import accountRoutes from "./routes/account.routes.js";
 
 export const app = express();
 
@@ -76,6 +78,7 @@ app.get("/api/health", (_req, res) => {
 // POST /api/auth/resend-registration-otp
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", sessionRoutes);
+app.use("/api/account", accountRoutes);
 
 // Handle unknown routes.
 app.use((req, res) => {
