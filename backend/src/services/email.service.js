@@ -95,6 +95,95 @@ export async function sendWelcomeEmail({
 }
 
 
+
+
+export async function sendSecurityOtp({
+  email,
+  firstName,
+  otp,
+  purpose,
+}) {
+  const messages = {
+    password_reset: {
+      subject: "Password reset verification | VeriCore AI",
+      heading: "Reset your password",
+      action: "Use this code to reset your VeriCore AI password.",
+    },
+    account_deletion: {
+      subject: "Confirm account deletion | VeriCore AI",
+      heading: "Confirm account deletion",
+      action:
+        "Use this code to confirm your account deletion request.",
+    },
+    email_recovery: {
+      subject: "Email recovery verification | VeriCore AI",
+      heading: "Verify your identity",
+      action:
+        "Use this code to continue your email recovery request.",
+    },
+  };
+
+  const message = messages[purpose];
+
+  if (!message) {
+    throw new Error("Unsupported security email purpose.");
+  }
+
+  return transporter.sendMail({
+    from: env.SMTP_FROM,
+    to: email,
+    subject: message.subject,
+    text: [
+      `Hello ${firstName || "there"},`,
+      "",
+      message.action,
+      `Your verification code is: ${otp}`,
+      `The code expires in ${env.OTP_TTL_MINUTES} minutes.`,
+      "",
+      "If you did not request this action, secure your account and contact support.",
+      "",
+      "VeriCore AI Security Team",
+    ].join("\n"),
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#171717">
+        <h2>${escapeHtml(message.heading)}</h2>
+        <p>Hello ${escapeHtml(firstName || "there")},</p>
+        <p>${escapeHtml(message.action)}</p>
+        <p style="font-size:30px;font-weight:bold;letter-spacing:8px">
+          ${escapeHtml(otp)}
+        </p>
+        <p>This code expires in ${env.OTP_TTL_MINUTES} minutes.</p>
+        <p>If you did not request this action, do not share the code.</p>
+        <hr />
+        <p>VeriCore AI Security Team</p>
+      </div>
+    `,
+  });
+}
+
+export async function sendRecoveryNotice({
+  email,
+  firstName,
+  subject,
+  message,
+}) {
+  return transporter.sendMail({
+    from: env.SMTP_FROM,
+    to: email,
+    subject,
+    text: `Hello ${firstName || "there"},\n\n${message}\n\nVeriCore AI Security Team`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#171717">
+        <h2>${escapeHtml(subject)}</h2>
+        <p>Hello ${escapeHtml(firstName || "there")},</p>
+        <p>${escapeHtml(message)}</p>
+        <p>VeriCore AI Security Team</p>
+      </div>
+    `,
+  });
+}
+
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (character) => {
     const entities = {

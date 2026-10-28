@@ -9,9 +9,16 @@ import {
 } from "../controllers/auth.controller.js";
 
 import {
+  forgotPassword,
+  resetPassword,
+} from "../controllers/recovery.controller.js";
+
+import {
   registerSchema,
   verifyRegistrationOtpSchema,
   resendRegistrationOtpSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from "../validators/auth.validators.js";
 
 import { validateBody } from "../middleware/validate-body.js";
@@ -68,6 +75,16 @@ const otpResendLimiter = rateLimit({
   },
 });
 
+
+const recoveryLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  skip: () => process.env.NODE_ENV === "test",
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+});
+
+
 // POST /api/auth/register
 router.post(
   "/register",
@@ -91,5 +108,22 @@ router.post(
   validateBody(resendRegistrationOtpSchema),
   resendRegistrationOtp,
 );
+
+// POST /api/auth/forgot-password
+router.post(
+  "/forgot-password",
+  recoveryLimiter,
+  validateBody(forgotPasswordSchema),
+  forgotPassword,
+);
+
+// POST /api/auth/reset-password
+router.post(
+  "/reset-password",
+  recoveryLimiter,
+  validateBody(resetPasswordSchema),
+  resetPassword,
+);
+
 
 export default router;
