@@ -6,6 +6,7 @@ import {
 } from "./config/database.js";
 
 let server;
+let isShuttingDown = false;
 
 async function startServer() {
   await connectDatabase();
@@ -15,33 +16,64 @@ async function startServer() {
       `${env.APP_NAME} API listening on port ${env.PORT}`,
     );
   });
+
+  server.on("error", (error) => {
+    console.error("HTTP server error:", error.message);
+    process.exitCode = 1;
+  });
 }
 
 async function shutdown(signal) {
-  console.info(`${signal} received. Shutting down...`);
-
-  if (server) {
-    await new Promise((resolve, reject) => {
-      server.close((error) => {
-        if (error) reject(error);
-        else resolve();
-      });
-    });
+  if (isShuttingDown) {
+    return;
   }
 
-  await disconnectDatabase();
-  process.exit(0);
+  isShuttingDown = true;
+  console.info(`${signal} received. Shutting down gracefully...`);
+
+  try {
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      });
+    }
+
+    await disconnectDatabase();
+
+    console.info("Server shutdown completed.");
+    process.exitCode = 0;
+  } catch (error) {
+    console.error("Shutdown failed:", error.message);
+    process.exitCode = 1;
+  }
 }
 
-process.on("SIGINT", () => {
+process.once("SIGINT", () => {
   void shutdown("SIGINT");
 });
 
-process.on("SIGTERM", () => {
+process.once("SIGTERM", () => {
   void shutdown("SIGTERM");
 });
 
-startServer().catch((error) => {
+startServer().catch(async (error) => {
   console.error("Server startup failed:", error.message);
-  process.exit(1);
+
+  try {
+    await disconnectDatabase();
+  } catch (shutdownError) {
+    console.error(
+      "Database cleanup failed:",
+      shutdownError.message,
+    );
+  }
+
+  process.exitCode = 1;
 });
+
