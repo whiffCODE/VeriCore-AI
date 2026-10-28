@@ -1,0 +1,36 @@
+# Environment secrets
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+.next/
+out/
+dist/
+build/
+coverage/
+
+# Local files
+uploads/
+temp/
+tmp/
+*.log
+logs/
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Test and runtime artifacts
+.nyc_output/
+playwright-report/
+test-results/
+*.pid
