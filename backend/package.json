@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+
   "scripts": {
-    "test": "vitest run --setupFiles ./src/tests/setup.js",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
+    "test": "vitest run",
     "test:watch": "vitest",
     "check": "node --check src/server.js"
   },
