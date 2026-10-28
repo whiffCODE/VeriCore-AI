@@ -53,7 +53,14 @@ const otpChallengeSchema = new mongoose.Schema(
   },
 );
 
-otpChallengeSchema.index({ email: 1, purpose: 1 });
+// Only one challenge per email and purpose.
+otpChallengeSchema.index(
+  { email: 1, purpose: 1 },
+  { unique: true },
+);
+
+// MongoDB automatically removes expired challenges eventually.
+// OTP verification must still explicitly check expiresAt.
 otpChallengeSchema.index(
   { expiresAt: 1 },
   { expireAfterSeconds: 0 },
