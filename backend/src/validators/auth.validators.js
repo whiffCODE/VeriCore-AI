@@ -131,3 +131,25 @@ export const accountDeletionRequestSchema = z.object({
 export const accountDeletionConfirmSchema = z.object({
   otp: z.string().regex(/^\d{6}$/),
 });
+
+
+export const adminUserListSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  status: z.enum([
+    "active",
+    "suspended",
+    "pending_deletion",
+  ]).optional(),
+  role: z.enum(["user", "admin"]).optional(),
+});
+
+export const adminStatusChangeSchema = z.object({
+  status: z.enum(["active", "suspended"]),
+  reason: z.string().trim().min(10).max(1000),
+});
+
+export const adminRoleChangeSchema = z.object({
+  role: z.enum(["user", "admin"]),
+  reason: z.string().trim().min(10).max(1000),
+});

@@ -9,6 +9,7 @@ import { env } from "./config/env.js";
 import authRoutes from "./routes/auth.routes.js";
 import sessionRoutes from "./routes/session.routes.js";
 import accountRoutes from "./routes/account.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 export const app = express();
 
@@ -79,6 +80,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", sessionRoutes);
 app.use("/api/account", accountRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Handle unknown routes.
 app.use((req, res) => {
