@@ -6,6 +6,7 @@ import { rateLimit } from "express-rate-limit";
 
 import { env } from "./config/env.js";
 import authRoutes from "./routes/auth.routes.js";
+import sessionRoutes from "./routes/session.routes.js";
 
 export const app = express();
 
@@ -74,6 +75,7 @@ app.get("/api/health", (_req, res) => {
 // POST /api/auth/verify-registration-otp
 // POST /api/auth/resend-registration-otp
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", sessionRoutes);
 
 // Handle unknown routes.
 app.use((req, res) => {
