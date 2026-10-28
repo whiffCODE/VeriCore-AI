@@ -102,3 +102,23 @@ export const resetPasswordSchema = z
       });
     }
   });
+
+
+export const recoverUserIdSchema = z
+  .object({
+    email: emailSchema.optional(),
+    phone: phoneSchema.optional(),
+  })
+  .refine(
+    (data) => Boolean(data.email) !== Boolean(data.phone),
+    "Provide exactly one of email or phone.",
+  );
+
+export const requestEmailRecoverySchema = z.object({
+  userId: z.string().trim().min(1).max(40),
+});
+
+export const verifyEmailRecoverySchema = z.object({
+  userId: z.string().trim().min(1).max(40),
+  otp: z.string().regex(/^\d{6}$/),
+});

@@ -19,7 +19,17 @@ import {
   resendRegistrationOtpSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  recoverUserIdSchema,
+  requestEmailRecoverySchema,
+  verifyEmailRecoverySchema,
 } from "../validators/auth.validators.js";
+
+import {
+  recoverUserId,
+  requestEmailRecovery,
+  verifyEmailRecovery,
+} from "../controllers/identity-recovery.controller.js";
+
 
 import { validateBody } from "../middleware/validate-body.js";
 
@@ -124,6 +134,29 @@ router.post(
   validateBody(resetPasswordSchema),
   resetPassword,
 );
+
+
+router.post(
+  "/recover-user-id",
+  recoveryLimiter,
+  validateBody(recoverUserIdSchema),
+  recoverUserId,
+);
+
+router.post(
+  "/recover-email",
+  recoveryLimiter,
+  validateBody(requestEmailRecoverySchema),
+  requestEmailRecovery,
+);
+
+router.post(
+  "/verify-email-recovery",
+  recoveryLimiter,
+  validateBody(verifyEmailRecoverySchema),
+  verifyEmailRecovery,
+);
+
 
 
 export default router;
