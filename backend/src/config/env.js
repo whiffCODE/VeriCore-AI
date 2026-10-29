@@ -1,3 +1,4 @@
+
 import "dotenv/config";
 import { z } from "zod";
 
@@ -20,7 +21,9 @@ const envSchema = z.object({
 
   SMTP_HOST: z.string().min(1),
   SMTP_PORT: z.coerce.number().int().min(1).max(65535),
-  SMTP_SECURE: z.enum(["true", "false"]).transform((value) => value === "true"),
+  SMTP_SECURE: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true"),
   SMTP_USER: z.string().email(),
   SMTP_PASS: z.string().min(1),
   SMTP_FROM: z.string().min(1),
@@ -29,6 +32,22 @@ const envSchema = z.object({
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
 
   APP_NAME: z.string().default("VeriCore AI"),
+
+  // Gemini
+  GEMINI_API_KEY: z.string().optional().default(""),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
+
+  // Groq
+  GROQ_API_KEY: z.string().optional().default(""),
+  GROQ_MODEL: z.string().default("llama-3.3-70b-versatile"),
+
+  // Anthropic Claude
+  ANTHROPIC_API_KEY: z.string().optional().default(""),
+  ANTHROPIC_MODEL: z.string().optional().default(""),
+
+  // OpenAI
+  OPENAI_API_KEY: z.string().optional().default(""),
+  OPENAI_MODEL: z.string().optional().default(""),
 });
 
 const result = envSchema.safeParse(process.env);

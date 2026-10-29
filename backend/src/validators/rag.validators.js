@@ -7,8 +7,13 @@ export const askQuestionSchema = z.object({
     .trim()
     .min(3, "Question must contain at least 3 characters.")
     .max(2000, "Question must not exceed 2000 characters."),
+
   documentIds: z
     .array(z.string().regex(/^[a-f\d]{24}$/i))
-    .max(50)
+    .max(50, "You can select at most 50 documents.")
     .optional(),
+
+  provider: z
+    .enum(["gemini", "groq", "claude", "openai"])
+    .default("gemini"),
 });
