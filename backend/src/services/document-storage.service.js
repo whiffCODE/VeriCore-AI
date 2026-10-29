@@ -1,5 +1,11 @@
+
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readFile,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -15,9 +21,24 @@ await mkdir(storageDir, {
   mode: 0o700,
 });
 
+function resolveStoragePath(storageKey) {
+  if (
+    typeof storageKey !== "string" ||
+    !/^[0-9a-f-]{36}\.pdf$/i.test(storageKey)
+  ) {
+    throw new Error("Invalid storage key");
+  }
+
+  return path.join(storageDir, storageKey);
+}
+
 export async function storePdf(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+    throw new Error("A non-empty PDF buffer is required");
+  }
+
   const storageKey = `${randomUUID()}.pdf`;
-  const filePath = path.join(storageDir, storageKey);
+  const filePath = resolveStoragePath(storageKey);
 
   await writeFile(filePath, buffer, {
     flag: "wx",
@@ -30,12 +51,12 @@ export async function storePdf(buffer) {
   };
 }
 
-export async function deleteStoredPdf(storageKey) {
-  // Accept only generated UUID-based PDF filenames.
-  if (!/^[0-9a-f-]{36}\.pdf$/i.test(storageKey)) {
-    throw new Error("Invalid storage key");
-  }
+export async function readStoredPdf(storageKey) {
+  const filePath = resolveStoragePath(storageKey);
+  return readFile(filePath);
+}
 
-  const filePath = path.join(storageDir, storageKey);
+export async function deleteStoredPdf(storageKey) {
+  const filePath = resolveStoragePath(storageKey);
   await unlink(filePath);
 }
