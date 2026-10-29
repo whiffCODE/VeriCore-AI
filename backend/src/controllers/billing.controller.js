@@ -8,6 +8,10 @@ import {
   handleRazorpayWebhook,
 } from "../services/razorpay-webhook.service.js";
 
+import {
+  createStripeCheckoutSession,
+} from "../services/stripe-checkout.service.js";
+
 export async function createRazorpayOrderController(req, res, next) {
   try {
     // Identity must come from your existing authentication middleware.
@@ -85,6 +89,42 @@ export async function razorpayWebhookController(req, res, next) {
     });
 
     return res.status(200).json({ data: result });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+
+
+export async function createStripeCheckoutSessionController(req, res, next) {
+  try {
+    const userId =
+      req.user?.userId ??
+      req.user?.id ??
+      req.user?._id ??
+      req.auth?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required.",
+      });
+    }
+
+    const { planId } = req.body ?? {};
+
+    if (typeof planId !== "string" || !planId.trim()) {
+      return res.status(400).json({
+        error: "planId is required.",
+      });
+    }
+
+    const session = await createStripeCheckoutSession({
+      userId: userId.toString(),
+      planId: planId.trim(),
+      idempotencyKey: req.get("Idempotency-Key"),
+    });
+
+    return res.status(201).json({ data: session });
   } catch (error) {
     return next(error);
   }

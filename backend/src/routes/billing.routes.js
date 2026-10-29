@@ -11,6 +11,10 @@ import {
   razorpayWebhookController,
 } from "../controllers/billing.controller.js";
 
+import {
+  createStripeCheckoutSessionController,
+} from "../controllers/billing.controller.js";
+
 const router = Router();
 
 router.post(
@@ -28,6 +32,12 @@ router.post(
 router.post(
   "/webhooks/razorpay",
   razorpayWebhookController,
+);
+
+router.post(
+  "/stripe/checkout-session",
+  requireAuth,
+  createStripeCheckoutSessionController,
 );
 
 export default router;

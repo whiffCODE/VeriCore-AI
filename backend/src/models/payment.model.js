@@ -120,7 +120,7 @@ const paymentSchema = new Schema(
       default: undefined,
     },
 
-    
+
 orderCreationStatus: {
   type: String,
   enum: ["not_started", "creating", "created", "failed"],
@@ -131,6 +131,19 @@ orderCreationStatus: {
 orderCreationLeaseUntil: {
   type: Date,
 },
+
+
+checkoutCreationStatus: {
+  type: String,
+  enum: ["not_started", "creating", "created", "failed"],
+  default: "not_started",
+  required: true,
+},
+
+checkoutCreationLeaseUntil: {
+  type: Date,
+},
+
 
   },
   {
