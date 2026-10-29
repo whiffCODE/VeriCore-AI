@@ -1,0 +1,28 @@
+
+import Razorpay from "razorpay";
+
+let razorpayClient;
+
+export function getRazorpayClient() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    const error = new Error("Razorpay credentials are not configured.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  if (!razorpayClient) {
+    razorpayClient = new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
+  }
+
+  return razorpayClient;
+}
+
+export function resetRazorpayClientForTests() {
+  razorpayClient = undefined;
+}
