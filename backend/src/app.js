@@ -11,6 +11,7 @@ import sessionRoutes from "./routes/session.routes.js";
 import accountRoutes from "./routes/account.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import documentRoutes from "./routes/document.routes.js";
+import ragRoutes from "./routes/rag.routes.js";
 
 export const app = express();
 
@@ -83,6 +84,7 @@ app.use("/api/auth", sessionRoutes);
 app.use("/api/account", accountRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/documents", documentRoutes);
+app.use("/api/rag", ragRoutes);
 
 // Handle unknown routes.
 app.use((req, res) => {
