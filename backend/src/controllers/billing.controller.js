@@ -4,6 +4,10 @@ import {
   verifyRazorpayCheckout,
 } from "../services/razorpay-verification.service.js";
 
+import {
+  handleRazorpayWebhook,
+} from "../services/razorpay-webhook.service.js";
+
 export async function createRazorpayOrderController(req, res, next) {
   try {
     // Identity must come from your existing authentication middleware.
@@ -66,6 +70,21 @@ export async function verifyRazorpayCheckoutController(req, res, next) {
       message: "Payment verified with Razorpay.",
       data: result,
     });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+
+export async function razorpayWebhookController(req, res, next) {
+  try {
+    const result = await handleRazorpayWebhook({
+      rawBody: req.rawBody,
+      signature: req.get("X-Razorpay-Signature"),
+      eventId: req.get("x-razorpay-event-id"),
+    });
+
+    return res.status(200).json({ data: result });
   } catch (error) {
     return next(error);
   }

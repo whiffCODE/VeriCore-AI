@@ -12,6 +12,7 @@ import accountRoutes from "./routes/account.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import documentRoutes from "./routes/document.routes.js";
 import ragRoutes from "./routes/rag.routes.js";
+import billingRoutes from "./routes/billing.routes.js";
 
 export const app = express();
 
@@ -29,12 +30,25 @@ if (env.TRUST_PROXY_HOPS > 0) {
 app.use(helmet());
 
 // Request body parsing.
+
+
+
 app.use(
   express.json({
-    limit: "32kb",
-    type: "application/json",
+    limit: "1mb",
+    verify: (req, res, buffer) => {
+      if (
+        req.originalUrl.split("?")[0] ===
+        "/api/billing/webhooks/razorpay"
+      ) {
+        req.rawBody = Buffer.from(buffer);
+      }
+    },
   }),
 );
+
+
+
 
 app.use(
   express.urlencoded({
@@ -85,6 +99,7 @@ app.use("/api/account", accountRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/rag", ragRoutes);
+app.use("/api/billing", billingRoutes);
 
 // Handle unknown routes.
 app.use((req, res) => {

@@ -7,6 +7,9 @@ import {
 import {
   verifyRazorpayCheckoutController,
 } from "../controllers/billing.controller.js";
+import {
+  razorpayWebhookController,
+} from "../controllers/billing.controller.js";
 
 const router = Router();
 
@@ -20,6 +23,11 @@ router.post(
   "/razorpay/verify",
   requireAuth,
   verifyRazorpayCheckoutController,
+);
+
+router.post(
+  "/webhooks/razorpay",
+  razorpayWebhookController,
 );
 
 export default router;
