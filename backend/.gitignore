@@ -7,4 +7,5 @@ coverage/
 dist/
 uploads/
 temp/
+storage/
 *.log
