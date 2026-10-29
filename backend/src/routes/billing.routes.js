@@ -15,6 +15,10 @@ import {
   createStripeCheckoutSessionController,
 } from "../controllers/billing.controller.js";
 
+import {
+  stripeWebhookController,
+} from "../controllers/billing.controller.js";
+
 const router = Router();
 
 router.post(
@@ -38,6 +42,11 @@ router.post(
   "/stripe/checkout-session",
   requireAuth,
   createStripeCheckoutSessionController,
+);
+
+router.post(
+  "/webhooks/stripe",
+  stripeWebhookController,
 );
 
 export default router;

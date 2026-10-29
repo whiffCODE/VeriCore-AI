@@ -12,6 +12,11 @@ import {
   createStripeCheckoutSession,
 } from "../services/stripe-checkout.service.js";
 
+import {
+  handleStripeWebhook,
+} from "../services/stripe-webhook.service.js";
+
+
 export async function createRazorpayOrderController(req, res, next) {
   try {
     // Identity must come from your existing authentication middleware.
@@ -129,3 +134,21 @@ export async function createStripeCheckoutSessionController(req, res, next) {
     return next(error);
   }
 }
+
+
+
+
+export async function stripeWebhookController(req, res, next) {
+  try {
+    const result = await handleStripeWebhook({
+      rawBody: req.rawBody,
+      signature: req.get("stripe-signature"),
+    });
+
+    return res.status(200).json({ data: result });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+

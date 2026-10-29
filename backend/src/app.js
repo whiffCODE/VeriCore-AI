@@ -33,19 +33,22 @@ app.use(helmet());
 
 
 
+
 app.use(
   express.json({
-    limit: "1mb",
     verify: (req, res, buffer) => {
+      const path = req.originalUrl.split("?")[0];
+
       if (
-        req.originalUrl.split("?")[0] ===
-        "/api/billing/webhooks/razorpay"
+        path === "/api/billing/webhooks/razorpay" ||
+        path === "/api/billing/webhooks/stripe"
       ) {
         req.rawBody = Buffer.from(buffer);
       }
     },
   }),
 );
+
 
 
 
