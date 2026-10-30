@@ -72,7 +72,7 @@ const paymentSchema = new Schema(
       maxlength: 128,
     },
 
-    // Provider-generated identifiers. Keep unset until supplied by the provider.
+    // Provider-generated identifiers.
     providerOrderId: {
       type: String,
       trim: true,
@@ -120,31 +120,36 @@ const paymentSchema = new Schema(
       default: undefined,
     },
 
+    // Razorpay order creation concurrency control.
+    orderCreationStatus: {
+      type: String,
+      enum: ["not_started", "creating", "created", "failed"],
+      default: "not_started",
+      required: true,
+    },
 
-orderCreationStatus: {
-  type: String,
-  enum: ["not_started", "creating", "created", "failed"],
-  default: "not_started",
-  required: true,
-},
+    orderCreationLeaseUntil: {
+      type: Date,
+    },
 
-orderCreationLeaseUntil: {
-  type: Date,
-},
+    // Stripe Checkout Session creation concurrency control.
+    checkoutCreationStatus: {
+      type: String,
+      enum: ["not_started", "creating", "created", "failed"],
+      default: "not_started",
+      required: true,
+    },
 
+    checkoutCreationLeaseUntil: {
+      type: Date,
+    },
 
-checkoutCreationStatus: {
-  type: String,
-  enum: ["not_started", "creating", "created", "failed"],
-  default: "not_started",
-  required: true,
-},
-
-checkoutCreationLeaseUntil: {
-  type: Date,
-},
-
-
+    // Linked subscription created after successful payment verification.
+    subscriptionId: {
+      type: Schema.Types.ObjectId,
+      ref: "Subscription",
+      default: undefined,
+    },
   },
   {
     timestamps: true,
@@ -156,28 +161,37 @@ checkoutCreationLeaseUntil: {
 // One client request key must not create multiple payments for the same user.
 paymentSchema.index(
   { userId: 1, idempotencyKey: 1 },
-  { unique: true, name: "unique_user_payment_idempotency" },
+  {
+    unique: true,
+    name: "unique_user_payment_idempotency",
+  },
 );
 
-// Provider IDs are unique when present, without forcing a placeholder value.
+// Provider order IDs must be unique when present.
 paymentSchema.index(
   { provider: 1, providerOrderId: 1 },
   {
     unique: true,
     name: "unique_provider_order",
-    partialFilterExpression: { providerOrderId: { $type: "string" } },
+    partialFilterExpression: {
+      providerOrderId: { $type: "string" },
+    },
   },
 );
 
+// Provider payment IDs must be unique when present.
 paymentSchema.index(
   { provider: 1, providerPaymentId: 1 },
   {
     unique: true,
     name: "unique_provider_payment",
-    partialFilterExpression: { providerPaymentId: { $type: "string" } },
+    partialFilterExpression: {
+      providerPaymentId: { $type: "string" },
+    },
   },
 );
 
+// Stripe Checkout Session IDs must be unique when present.
 paymentSchema.index(
   { provider: 1, providerCheckoutSessionId: 1 },
   {
@@ -189,9 +203,20 @@ paymentSchema.index(
   },
 );
 
+// User payment history.
 paymentSchema.index({ userId: 1, createdAt: -1 });
 
-const Payment =
-  models.Payment ?? model("Payment", paymentSchema);
+// Efficient lookup of payments by subscription.
+paymentSchema.index(
+  { subscriptionId: 1 },
+  {
+    name: "payments_by_subscription",
+    partialFilterExpression: {
+      subscriptionId: { $type: "objectId" },
+    },
+  },
+);
+
+const Payment = models.Payment ?? model("Payment", paymentSchema);
 
 export default Payment;

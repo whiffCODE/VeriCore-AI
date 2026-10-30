@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 
 import Payment from "../models/payment.model.js";
 import { getRazorpayClient } from "./razorpay.service.js";
+import {
+  activateSubscriptionForPayment,
+} from "./subscription-lifecycle.service.js";
 
 function httpError(statusCode, message) {
   const error = new Error(message);
@@ -33,6 +36,19 @@ function verifyCheckoutSignature(orderId, paymentId, signature, secret) {
     received.length === expected.length &&
     timingSafeEqual(received, expected)
   );
+}
+
+async function buildCapturedPaymentResponse(payment, alreadyVerified) {
+  // Reconcile subscription activation even when the payment was
+  // captured by an earlier callback or webhook.
+  const subscription = await activateSubscriptionForPayment(payment._id);
+
+  return {
+    paymentId: payment._id.toString(),
+    status: "captured",
+    alreadyVerified,
+    subscription,
+  };
 }
 
 export async function verifyRazorpayCheckout({
@@ -92,11 +108,7 @@ export async function verifyRazorpayCheckout({
       throw httpError(409, "This order was captured with another payment ID.");
     }
 
-    return {
-      paymentId: payment._id.toString(),
-      status: "captured",
-      alreadyVerified: true,
-    };
+    return buildCapturedPaymentResponse(payment, true);
   }
 
   if (!["pending", "authorized"].includes(payment.status)) {
@@ -222,11 +234,7 @@ export async function verifyRazorpayCheckout({
       latest?.status === "captured" &&
       latest.providerPaymentId === razorpay_payment_id
     ) {
-      return {
-        paymentId: latest._id.toString(),
-        status: "captured",
-        alreadyVerified: true,
-      };
+      return buildCapturedPaymentResponse(latest, true);
     }
 
     throw httpError(
@@ -235,9 +243,6 @@ export async function verifyRazorpayCheckout({
     );
   }
 
-  return {
-    paymentId: updated._id.toString(),
-    status: "captured",
-    alreadyVerified: false,
-  };
+  // Phase 5H: activate or queue the subscription only after capture.
+  return buildCapturedPaymentResponse(updated, false);
 }

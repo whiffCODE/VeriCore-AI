@@ -89,13 +89,30 @@ const userSchema = new mongoose.Schema(
         enum: ["free", "pro", "enterprise"],
         default: "free",
       },
+
       status: {
         type: String,
         enum: ["trial", "active", "expired", "cancelled"],
         default: "trial",
       },
-      startsAt: Date,
-      endsAt: Date,
+
+      startsAt: {
+        type: Date,
+        default: null,
+      },
+
+      endsAt: {
+        type: Date,
+        default: null,
+      },
+    },
+
+    // Used to serialize concurrent subscription lifecycle updates.
+    __billingRevision: {
+      type: Number,
+      default: 0,
+      select: false,
+      min: 0,
     },
   },
   {
@@ -104,6 +121,7 @@ const userSchema = new mongoose.Schema(
   },
 );
 
-userSchema.index({ userId: 1 }, { unique: true, sparse: true });
+const User = mongoose.models.User ?? mongoose.model("User", userSchema);
 
-export const User = mongoose.model("User", userSchema);
+export { User };
+export default User;

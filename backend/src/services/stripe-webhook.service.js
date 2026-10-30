@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import Payment from "../models/payment.model.js";
 import WebhookEvent from "../models/webhook-event.model.js";
 import { getStripeClient } from "./stripe.service.js";
+import { activateSubscriptionForPayment } from "./subscription-lifecycle.service.js";
 
 const LEASE_MS = 30_000;
 const MAX_PAYLOAD_BYTES = 1_000_000;
@@ -91,6 +92,15 @@ async function claimEvent({ eventId, eventType, payloadHash }) {
   }
 
   return { duplicate: false, event: reclaimed };
+}
+
+async function activateCapturedPayment(paymentId, outcome) {
+  const subscription = await activateSubscriptionForPayment(paymentId);
+
+  return {
+    outcome,
+    subscription,
+  };
 }
 
 async function reconcileCheckoutSession(sessionId, eventType) {
@@ -190,6 +200,9 @@ async function reconcileCheckoutSession(sessionId, eventType) {
     );
   }
 
+  // Recovery path:
+  // Payment may already be captured while subscription activation
+  // previously failed or the webhook was retried.
   if (payment.status === "captured") {
     if (payment.providerPaymentId !== paymentIntentId) {
       throw httpError(
@@ -198,7 +211,7 @@ async function reconcileCheckoutSession(sessionId, eventType) {
       );
     }
 
-    return { outcome: "already_captured" };
+    return activateCapturedPayment(payment._id, "already_captured");
   }
 
   if (!["pending", "authorized"].includes(payment.status)) {
@@ -242,16 +255,19 @@ async function reconcileCheckoutSession(sessionId, eventType) {
   }
 
   if (updated) {
-    return { outcome: "payment_captured" };
+    // Activate the purchased subscription only after verified capture.
+    // If this fails, the webhook is marked failed and can be retried.
+    return activateCapturedPayment(updated._id, "payment_captured");
   }
 
+  // Another request may have captured the payment concurrently.
   const latest = await Payment.findById(payment._id);
 
   if (
     latest?.status === "captured" &&
     latest.providerPaymentId === paymentIntentId
   ) {
-    return { outcome: "already_captured" };
+    return activateCapturedPayment(latest._id, "already_captured");
   }
 
   throw httpError(
