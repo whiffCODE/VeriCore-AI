@@ -10,8 +10,13 @@ import {
   getPaymentHistoryController,
   getPaymentReceiptController,
   createPaymentReceiptController,
-  downloadPaymentReceiptController
+  downloadPaymentReceiptController,
+  startPaymentReconciliationController,
+  getPaymentReconciliationRunController,
+  listPaymentReconciliationRunsController,
 } from "../controllers/billing.controller.js";
+
+import { requireAdmin } from "../middleware/require-admin.js";
 
 
 
@@ -67,6 +72,27 @@ router.get(
   "/receipts/:receiptId/download",
   requireAuth,
   downloadPaymentReceiptController
+);
+
+router.post(
+  "/admin/reconciliation",
+  requireAuth,
+  requireAdmin,
+  startPaymentReconciliationController
+);
+
+router.get(
+  "/admin/reconciliation",
+  requireAuth,
+  requireAdmin,
+  listPaymentReconciliationRunsController
+);
+
+router.get(
+  "/admin/reconciliation/:runId",
+  requireAuth,
+  requireAdmin,
+  getPaymentReconciliationRunController
 );
 
 export default router;
