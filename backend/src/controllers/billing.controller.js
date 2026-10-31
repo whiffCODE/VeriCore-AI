@@ -20,6 +20,14 @@ import {
   createReceiptForPayment,
 } from "../services/receipt.service.js";
 
+import {
+  createReceiptPdf
+} from "../services/receipt-pdf.service.js";
+
+import {
+  Receipt
+} from "../models/receipt.model.js";
+
 import Receipt from "../models/receipt.model.js";
 import Payment from "../models/payment.model.js";
 
@@ -243,6 +251,46 @@ export async function createPaymentReceiptController(req, res, next) {
       success: true,
       data: receipt,
     });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function downloadPaymentReceiptController(req, res, next) {
+  try {
+    const receipt = await Receipt.findOne({
+      _id: req.params.receiptId,
+      userId: req.user._id,
+    }).lean();
+
+    if (!receipt) {
+      return res.status(404).json({
+        success: false,
+        message: "Receipt not found",
+      });
+    }
+
+    const filename = `${receipt.receiptNumber}.pdf`;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${filename}"`
+    );
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+
+    const pdf = createReceiptPdf(receipt);
+
+    pdf.on("error", (error) => {
+      if (!res.headersSent) {
+        next(error);
+      } else {
+        res.destroy(error);
+      }
+    });
+
+    pdf.pipe(res);
   } catch (error) {
     return next(error);
   }

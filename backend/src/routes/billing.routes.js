@@ -10,6 +10,7 @@ import {
   getPaymentHistoryController,
   getPaymentReceiptController,
   createPaymentReceiptController,
+  downloadPaymentReceiptController
 } from "../controllers/billing.controller.js";
 
 
@@ -62,6 +63,10 @@ router.get(
   getPaymentReceiptController
 );
 
-
+router.get(
+  "/receipts/:receiptId/download",
+  requireAuth,
+  downloadPaymentReceiptController
+);
 
 export default router;
