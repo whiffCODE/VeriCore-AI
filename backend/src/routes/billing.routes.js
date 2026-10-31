@@ -3,21 +3,16 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/require-auth.js";
 import {
   createRazorpayOrderController,
-} from "../controllers/billing.controller.js";
-import {
   verifyRazorpayCheckoutController,
-} from "../controllers/billing.controller.js";
-import {
   razorpayWebhookController,
-} from "../controllers/billing.controller.js";
-
-import {
   createStripeCheckoutSessionController,
+  stripeWebhookController,
+  getPaymentHistoryController,
+  getPaymentReceiptController,
+  createPaymentReceiptController,
 } from "../controllers/billing.controller.js";
 
-import {
-  stripeWebhookController,
-} from "../controllers/billing.controller.js";
+
 
 const router = Router();
 
@@ -48,5 +43,25 @@ router.post(
   "/webhooks/stripe",
   stripeWebhookController,
 );
+
+router.get(
+  "/payments",
+  requireAuth,
+  getPaymentHistoryController
+);
+
+router.post(
+  "/payments/:paymentId/receipt",
+  requireAuth,
+  createPaymentReceiptController
+);
+
+router.get(
+  "/receipts/:receiptId",
+  requireAuth,
+  getPaymentReceiptController
+);
+
+
 
 export default router;

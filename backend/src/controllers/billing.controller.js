@@ -3,28 +3,39 @@ import { createRazorpayOrder } from "../services/payment-order.service.js";
 import {
   verifyRazorpayCheckout,
 } from "../services/razorpay-verification.service.js";
-
 import {
   handleRazorpayWebhook,
 } from "../services/razorpay-webhook.service.js";
-
 import {
   createStripeCheckoutSession,
 } from "../services/stripe-checkout.service.js";
-
 import {
   handleStripeWebhook,
 } from "../services/stripe-webhook.service.js";
 
+import {
+  getPaymentHistory,
+} from "../services/payment-history.service.js";
+import {
+  createReceiptForPayment,
+} from "../services/receipt.service.js";
+
+import Receipt from "../models/receipt.model.js";
+import Payment from "../models/payment.model.js";
+
+function getAuthenticatedUserId(req) {
+  const userId =
+    req.user?.userId ??
+    req.user?.id ??
+    req.user?._id ??
+    req.auth?.userId;
+
+  return userId?.toString() ?? null;
+}
 
 export async function createRazorpayOrderController(req, res, next) {
   try {
-    // Identity must come from your existing authentication middleware.
-    const userId =
-      req.user?.userId ??
-      req.user?.id ??
-      req.user?._id ??
-      req.auth?.userId;
+    const userId = getAuthenticatedUserId(req);
 
     if (!userId) {
       return res.status(401).json({
@@ -41,26 +52,22 @@ export async function createRazorpayOrderController(req, res, next) {
     }
 
     const order = await createRazorpayOrder({
-      userId: userId.toString(),
+      userId,
       planId: planId.trim(),
       idempotencyKey: req.get("Idempotency-Key"),
     });
 
-    return res.status(201).json({ data: order });
+    return res.status(201).json({
+      data: order,
+    });
   } catch (error) {
     return next(error);
   }
 }
 
-
-
 export async function verifyRazorpayCheckoutController(req, res, next) {
   try {
-    const userId =
-      req.user?.userId ??
-      req.user?.id ??
-      req.user?._id ??
-      req.auth?.userId;
+    const userId = getAuthenticatedUserId(req);
 
     if (!userId) {
       return res.status(401).json({
@@ -69,7 +76,7 @@ export async function verifyRazorpayCheckoutController(req, res, next) {
     }
 
     const result = await verifyRazorpayCheckout({
-      userId: userId.toString(),
+      userId,
       razorpay_order_id: req.body?.razorpay_order_id,
       razorpay_payment_id: req.body?.razorpay_payment_id,
       razorpay_signature: req.body?.razorpay_signature,
@@ -84,7 +91,6 @@ export async function verifyRazorpayCheckoutController(req, res, next) {
   }
 }
 
-
 export async function razorpayWebhookController(req, res, next) {
   try {
     const result = await handleRazorpayWebhook({
@@ -93,21 +99,17 @@ export async function razorpayWebhookController(req, res, next) {
       eventId: req.get("x-razorpay-event-id"),
     });
 
-    return res.status(200).json({ data: result });
+    return res.status(200).json({
+      data: result,
+    });
   } catch (error) {
     return next(error);
   }
 }
 
-
-
 export async function createStripeCheckoutSessionController(req, res, next) {
   try {
-    const userId =
-      req.user?.userId ??
-      req.user?.id ??
-      req.user?._id ??
-      req.auth?.userId;
+    const userId = getAuthenticatedUserId(req);
 
     if (!userId) {
       return res.status(401).json({
@@ -124,19 +126,18 @@ export async function createStripeCheckoutSessionController(req, res, next) {
     }
 
     const session = await createStripeCheckoutSession({
-      userId: userId.toString(),
+      userId,
       planId: planId.trim(),
       idempotencyKey: req.get("Idempotency-Key"),
     });
 
-    return res.status(201).json({ data: session });
+    return res.status(201).json({
+      data: session,
+    });
   } catch (error) {
     return next(error);
   }
 }
-
-
-
 
 export async function stripeWebhookController(req, res, next) {
   try {
@@ -145,10 +146,104 @@ export async function stripeWebhookController(req, res, next) {
       signature: req.get("stripe-signature"),
     });
 
-    return res.status(200).json({ data: result });
+    return res.status(200).json({
+      data: result,
+    });
   } catch (error) {
     return next(error);
   }
 }
 
+export async function getPaymentHistoryController(req, res, next) {
+  try {
+    const userId = getAuthenticatedUserId(req);
 
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required.",
+      });
+    }
+
+    const result = await getPaymentHistory({
+      userId,
+      limit: req.query.limit,
+      cursor: req.query.cursor,
+      status: req.query.status,
+      provider: req.query.provider,
+      from: req.query.from,
+      to: req.query.to,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function getPaymentReceiptController(req, res, next) {
+  try {
+    const userId = getAuthenticatedUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required.",
+      });
+    }
+
+    const receipt = await Receipt.findOne({
+      _id: req.params.receiptId,
+      userId,
+    }).lean();
+
+    if (!receipt) {
+      return res.status(404).json({
+        success: false,
+        message: "Receipt not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: receipt,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+export async function createPaymentReceiptController(req, res, next) {
+  try {
+    const userId = getAuthenticatedUserId(req);
+
+    if (!userId) {
+      return res.status(401).json({
+        error: "Authentication required.",
+      });
+    }
+
+    // Check ownership before attempting to create a receipt.
+    const payment = await Payment.findOne({
+      _id: req.params.paymentId,
+      userId,
+    }).select("_id");
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found",
+      });
+    }
+
+    const receipt = await createReceiptForPayment(payment._id);
+
+    return res.status(200).json({
+      success: true,
+      data: receipt,
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
