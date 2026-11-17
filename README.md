@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-=======
-
 <p align="center">
   <img
-    src="https://res.cloudinary.com/fdwexjk4/image/upload/v1794724304/VeriCore_AI_icon-removebg-preview.png"
+    src="https://res.cloudinary.com/fdwexjk4/image/upload/v1794942018/vericore-ai-github-social-preview-1280x640.png"
     alt="VeriCore AI official logo"
     width="110"
   />
@@ -24,7 +21,7 @@
   Generate answers grounded in verifiable evidence.
 </p>
 
->>>>>>> 2d2ddcd (docs: add architecture and repository contribution templates)
+
 # VeriCore AI 3.0
 
 ### Multimodal Enterprise Knowledge Intelligence & Multi-Agent SOP Platform
@@ -162,13 +159,4 @@ VeriCore-AI/
     ├── ISSUE_TEMPLATE/
     └── PULL_REQUEST_TEMPLATE.md
 ```
-
-## Project Principles
-
-- Evidence before generation
-- Multimodal document understanding
-- Verifiable source citations
-- Security and tenant isolation
-- Responsible AI and uncertainty handling
-- Modular, testable engineering
 
