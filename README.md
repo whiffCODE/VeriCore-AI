@@ -1,27 +1,82 @@
-
 # VeriCore AI 3.0
 
-**Multimodal Enterprise Knowledge Intelligence & Multi-Agent SOP Platform**
+### Multimodal Enterprise Knowledge Intelligence & Multi-Agent SOP Platform
 
-VeriCore AI is a secure, multimodal enterprise knowledge intelligence platform designed to understand complex organizational documents, retrieve relevant information, and generate evidence-grounded answers with verifiable citations.
+**Evidence before answers.**
 
-## Project Vision
+VeriCore AI is an enterprise knowledge intelligence platform being developed to understand complex organizational documents, retrieve relevant information across multiple modalities, and generate answers grounded in verifiable evidence.
 
-Build an intelligent knowledge platform that can understand not only text, but also tables, scanned documents, images, charts, diagrams, and structured information.
+Unlike conventional document chatbots, VeriCore is designed around evidence traceability, document structure, contextual retrieval, and responsible AI reasoning.
 
-The platform aims to help organizations access, interpret, and verify their internal knowledge through reliable AI-powered retrieval and reasoning.
+---
 
-## Core Principles
+## Vision
 
-- **Evidence First:** Answers should be grounded in retrieved source material.
-- **Multimodal Understanding:** Support text, tables, images, charts, diagrams, and scanned documents.
-- **Verifiable Citations:** Connect factual claims to their original document locations.
-- **Security by Design:** Protect organizational information through authentication, authorization, and tenant isolation.
-- **Responsible AI:** Communicate uncertainty and abstain when sufficient evidence is unavailable.
+Organizations store critical knowledge across policies, standard operating procedures, reports, forms, tables, scanned documents, diagrams, and other unstructured sources.
+
+VeriCore AI aims to make this information searchable, understandable, and verifiable through a unified knowledge platform.
+
+## Core Capabilities (Planned)
+
+- **Multimodal Document Understanding:** Process text, tables, scanned pages, images, charts, diagrams, and structured information.
+- **Hybrid Retrieval:** Combine semantic, lexical, and visual retrieval strategies.
+- **Evidence-Grounded Answers:** Connect generated claims to their original document locations.
+- **Multi-Agent Workflows:** Coordinate specialized agents for retrieval, analysis, verification, and SOP-oriented tasks.
+- **Evidence Inspection:** Trace answers to source documents, pages, sections, tables, and visual regions.
+- **Enterprise Security:** Design for authentication, authorization, tenant isolation, and auditability.
+- **Responsible AI:** Communicate uncertainty and abstain when the available evidence is insufficient.
+
+## Technology Direction
+
+| Layer | Selected technologies |
+|---|---|
+| Frontend | Next.js, React, TypeScript |
+| UI | Tailwind CSS, shadcn/ui, Motion |
+| Backend | Node.js, Express, TypeScript |
+| AI service | Python, FastAPI |
+| Application database | MongoDB |
+| Vector database | Qdrant |
+| AI orchestration | LangGraph |
+| Local model runtime | Ollama |
+| Document processing | PyMuPDF, Docling, OCR tooling |
+
+Technology choices are subject to compatibility testing and hardware-aware benchmarking.
+
+## Architecture
+
+The project follows a modular monorepo architecture:
+
+- `apps/web` – Web application.
+- `apps/api` – Main application API.
+- `services/ai` – Python-based AI processing service.
+- `packages/contracts` – Shared application contracts.
+- `infrastructure` – Deployment and infrastructure configuration.
+- `tests` – Integration, end-to-end, and evaluation tests.
+
+## Development Principles
+
+1. Evidence before generation.
+2. Security by design.
+3. Modular and maintainable architecture.
+4. Local-first development using open-source tools.
+5. Measurable retrieval and answer quality.
+6. Honest uncertainty and failure handling.
 
 ## Development Status
 
-Early development. The project is being built incrementally, with an emphasis on learning, testing, reliability, and maintainability.
+**Early development.**
+
+The repository is being built incrementally. The architecture and technology direction are established, while application functionality, document processing, retrieval, authentication, and multi-agent workflows are being implemented and tested.
+
+Planned capabilities should not be interpreted as completed features.
+
+## Getting Started
+
+Development setup instructions will be added as the application architecture stabilizes.
+
+## Project Ownership
+
+VeriCore AI is maintained by [whiffCODE](https://github.com/whiffCODE).
 
 ## License
 
