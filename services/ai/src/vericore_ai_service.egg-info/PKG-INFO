@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: vericore-ai-service
+Version: 0.1.0
+Summary: Multimodal enterprise knowledge intelligence and AI processing service
+Requires-Python: >=3.15
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

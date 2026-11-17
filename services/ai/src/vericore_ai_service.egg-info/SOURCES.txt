@@ -1,0 +1,7 @@
+pyproject.toml
+src/vericore_ai/__init__.py
+src/vericore_ai_service.egg-info/PKG-INFO
+src/vericore_ai_service.egg-info/SOURCES.txt
+src/vericore_ai_service.egg-info/dependency_links.txt
+src/vericore_ai_service.egg-info/requires.txt
+src/vericore_ai_service.egg-info/top_level.txt
