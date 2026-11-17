@@ -1,10 +1,4 @@
-<p align="center">
-  <img
-    src="https://res.cloudinary.com/fdwexjk4/image/upload/v1794942018/vericore-ai-github-social-preview-1280x640.png"
-    alt="VeriCore AI official logo"
-    width="800"
-  />
-</p>
+![VeriCore AI 3.0 | Multimodal Enterprise Knowledge Intelligence](https://res.cloudinary.com/fdwexjk4/image/upload/v1794942018/vericore-ai-github-social-preview-1280x640.png)
 
 <h1 align="center">VeriCore AI 3.0</h1>
 
@@ -21,142 +15,249 @@
   Generate answers grounded in verifiable evidence.
 </p>
 
+---
 
-# VeriCore AI 3.0
+## Overview
 
-### Multimodal Enterprise Knowledge Intelligence & Multi-Agent SOP Platform
+Enterprise knowledge is scattered across policies, standard operating procedures, reports, scanned documents, tables, diagrams, forms, and other information sources.
 
-**Evidence before answers.**
+Conventional document chatbots often struggle with this complexity, particularly when answers depend on document structure, visual information, cross-references, or conflicting sources.
 
-VeriCore AI is an enterprise knowledge intelligence platform being developed to understand complex organizational documents, retrieve relevant information across multiple modalities, and generate answers grounded in verifiable evidence.
+**VeriCore AI** is being developed to address this challenge through multimodal document understanding, hybrid knowledge retrieval, coordinated AI workflows, and evidence-grounded answer generation.
 
-Unlike conventional document chatbots, VeriCore is designed around evidence traceability, document structure, contextual retrieval, and responsible AI reasoning.
+The goal is not simply to generate answers, but to make organizational knowledge understandable, traceable, and verifiable.
+
+## What Makes VeriCore Different?
+
+| Conventional document chatbot | VeriCore AI vision |
+|---|---|
+| Primarily text-oriented | Multimodal document understanding |
+| Basic similarity search | Hybrid text and visual retrieval |
+| Generates answers | Generates evidence-grounded answers |
+| Limited source traceability | Document, page, section and visual references |
+| Single-step question answering | Specialized multi-agent workflows |
+| May answer with insufficient evidence | Designed to communicate uncertainty and abstain |
+
+## Core Capabilities
+
+The following capabilities define the intended product scope and are under development.
+
+### 01. Multimodal Document Intelligence
+
+Understand complex enterprise information, including:
+
+- Text, paragraphs and headings
+- Tables and nested tables
+- Scanned documents and forms
+- Images, screenshots and charts
+- Flowcharts, diagrams and visual workflows
+- Structured records and cross-referenced content
+
+### 02. Hybrid Knowledge Retrieval
+
+Combine multiple retrieval approaches to locate relevant information across enterprise knowledge sources.
+
+- Semantic vector search
+- Lexical and keyword retrieval
+- Reranking for relevance refinement
+- Visual document retrieval
+- Context-aware evidence selection
+
+### 03. Evidence-Grounded Answer Generation
+
+Generate responses using retrieved source material rather than unsupported assumptions.
+
+- Traceable source references
+- Page and section-level citations
+- Table and figure references
+- Evidence inspection
+- Uncertainty communication
+- Abstention when sufficient evidence is unavailable
+
+### 04. Multi-Agent Intelligence
+
+Coordinate specialized AI workflows for complex knowledge tasks.
+
+- Query understanding
+- Retrieval planning
+- Document analysis
+- Evidence verification
+- SOP-oriented reasoning
+- Answer quality evaluation
+
+### 05. Enterprise Security
+
+Build around enterprise security requirements from the beginning.
+
+- Authentication and authorization
+- Workspace isolation and tenant boundaries
+- Role-based access control
+- Audit logging
+- Secure document handling
+- Protection against malicious document instructions
 
 ---
 
-## Vision
-
-Organizations store critical knowledge across policies, standard operating procedures, reports, forms, tables, scanned documents, diagrams, and other unstructured sources.
-
-VeriCore AI aims to make this information searchable, understandable, and verifiable through a unified knowledge platform.
-
-## Core Capabilities (Planned)
-
-- **Multimodal Document Understanding:** Process text, tables, scanned pages, images, charts, diagrams, and structured information.
-- **Hybrid Retrieval:** Combine semantic, lexical, and visual retrieval strategies.
-- **Evidence-Grounded Answers:** Connect generated claims to their original document locations.
-- **Multi-Agent Workflows:** Coordinate specialized agents for retrieval, analysis, verification, and SOP-oriented tasks.
-- **Evidence Inspection:** Trace answers to source documents, pages, sections, tables, and visual regions.
-- **Enterprise Security:** Design for authentication, authorization, tenant isolation, and auditability.
-- **Responsible AI:** Communicate uncertainty and abstain when the available evidence is insufficient.
-
-## Technology Direction
-
-| Layer | Selected technologies |
-|---|---|
-| Frontend | Next.js, React, TypeScript |
-| UI | Tailwind CSS, shadcn/ui, Motion |
-| Backend | Node.js, Express, TypeScript |
-| AI service | Python, FastAPI |
-| Application database | MongoDB |
-| Vector database | Qdrant |
-| AI orchestration | LangGraph |
-| Local model runtime | Ollama |
-| Document processing | PyMuPDF, Docling, OCR tooling |
-
-Technology choices are subject to compatibility testing and hardware-aware benchmarking.
-
 ## Architecture
 
-The project follows a modular monorepo architecture:
-
-- `apps/web` – Web application.
-- `apps/api` – Main application API.
-- `services/ai` – Python-based AI processing service.
-- `packages/contracts` – Shared application contracts.
-- `infrastructure` – Deployment and infrastructure configuration.
-- `tests` – Integration, end-to-end, and evaluation tests.
-
-## Development Principles
-
-1. Evidence before generation.
-2. Security by design.
-3. Modular and maintainable architecture.
-4. Local-first development using open-source tools.
-5. Measurable retrieval and answer quality.
-6. Honest uncertainty and failure handling.
-
-## Development Status
-
-**Early development.**
-
-The repository is being built incrementally. The architecture and technology direction are established, while application functionality, document processing, retrieval, authentication, and multi-agent workflows are being implemented and tested.
-
-Planned capabilities should not be interpreted as completed features.
-
-## Getting Started
-
-Development setup instructions will be added as the application architecture stabilizes.
-
-## Project Ownership
-
-VeriCore AI is maintained by [whiffCODE](https://github.com/whiffCODE).
-
-## License
-
-All rights reserved. No license has been granted for redistribution or commercial use.
-
-
-
-## Architecture at a Glance
-
-VeriCore AI follows a modular architecture with a dedicated web
-application, application API, and Python-based AI service.
-
-See [Architecture Documentation](docs/architecture.md) for
-component responsibilities, data flow, and security boundaries.
+VeriCore AI follows a modular monorepo architecture with separate application and AI-processing responsibilities.
 
 ```mermaid
-flowchart LR
-    USER["Users"]
-    WEB["Next.js Web"]
-    API["Express API"]
-    AI["Python AI Service"]
-    DB[("MongoDB")]
-    VECTOR[("Qdrant")]
-    STORAGE[("Document Storage")]
+flowchart TB
+    USER["Enterprise Users"]
+
+    WEB["Next.js Web Application"]
+    API["Node.js / Express API"]
+
+    subgraph AI["Python AI Service"]
+        INGEST["Document Ingestion"]
+        UNDERSTAND["Parsing · OCR · Layout Analysis"]
+        RETRIEVE["Hybrid Retrieval"]
+        RERANK["Reranking"]
+        AGENTS["Multi-Agent Orchestration"]
+        VERIFY["Evidence Verification"]
+        LLM["Local LLM Runtime"]
+
+        INGEST --> UNDERSTAND
+        UNDERSTAND --> RETRIEVE
+        RETRIEVE --> RERANK
+        RERANK --> AGENTS
+        AGENTS <--> LLM
+        AGENTS --> VERIFY
+    end
+
+    subgraph DATA["Data Infrastructure"]
+        MONGO[("MongoDB")]
+        QDRANT[("Qdrant")]
+        STORAGE[("Document Storage")]
+        REDIS[("Redis · Optional")]
+    end
 
     USER --> WEB
-    WEB --> API
+    WEB -->|"HTTPS / REST"| API
     API --> AI
-    API <--> DB
-    AI <--> VECTOR
+    API <--> MONGO
     API <--> STORAGE
+    AI <--> QDRANT
     AI <--> STORAGE
+    API -.-> REDIS
+    AI -.-> REDIS
+    VERIFY --> API
+    API --> WEB
 ```
+
+See **[Architecture Documentation](docs/architecture.md)** for detailed component responsibilities, data flow, security boundaries, and engineering principles.
+
+## Technology Stack
+
+The current technology direction is based on open-source tools and local-first development.
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| Frontend | Next.js, React, TypeScript | Web application |
+| UI | Tailwind CSS, shadcn/ui, Motion | Interface and interactions |
+| Backend | Node.js, Express, TypeScript | Application API |
+| AI service | Python, FastAPI | AI processing and orchestration |
+| Application database | MongoDB | Application and workspace data |
+| Vector database | Qdrant | Vector and multimodal retrieval |
+| AI orchestration | LangGraph | Multi-agent workflows |
+| Model runtime | Ollama | Local LLM inference |
+| Document processing | PyMuPDF, Docling, OCR tools | Extraction and document understanding |
+
+Technology selections remain subject to compatibility testing, evaluation, and hardware-aware benchmarking.
 
 ## Repository Structure
 
 ```text
 VeriCore-AI/
+│
 ├── apps/
-│   ├── web/                 # Next.js frontend
-│   └── api/                 # Express application API
+│   ├── web/                  # Next.js frontend
+│   └── api/                  # Express application API
+│
 ├── services/
-│   └── ai/                  # Python AI service
+│   └── ai/                   # Python AI service
+│
 ├── packages/
-│   └── contracts/           # Shared TypeScript contracts
+│   └── contracts/            # Shared TypeScript contracts
+│
 ├── infrastructure/
-│   ├── docker/
-│   └── scripts/
+│   ├── docker/               # Container configuration
+│   └── scripts/              # Development utilities
+│
 ├── tests/
-│   ├── integration/
-│   ├── e2e/
-│   └── evaluation/
+│   ├── integration/          # Integration tests
+│   ├── e2e/                  # End-to-end tests
+│   └── evaluation/            # AI evaluation tests
+│
 ├── docs/
-│   └── architecture.md
-└── .github/
-    ├── ISSUE_TEMPLATE/
-    └── PULL_REQUEST_TEMPLATE.md
+│   └── architecture.md       # System architecture
+│
+├── .github/
+│   ├── ISSUE_TEMPLATE/       # Structured issue forms
+│   └── PULL_REQUEST_TEMPLATE.md
+│
+├── .gitignore
+├── package.json
+└── tsconfig.base.json
 ```
 
+## Engineering Principles
+
+VeriCore AI is being developed around six principles:
+
+1. **Evidence before generation:** Every factual answer should be supported by retrieved evidence.
+2. **Multimodal by design:** Understand document structure and visual information, not just extracted text.
+3. **Security by design:** Protect organizational data through explicit access boundaries.
+4. **Responsible AI:** Communicate uncertainty and avoid unsupported claims.
+5. **Modular engineering:** Maintain clear boundaries between application, AI and infrastructure components.
+6. **Measurable quality:** Evaluate retrieval relevance, citation correctness, answer faithfulness, performance and failure handling.
+
+## Development Status
+
+**Early development · Active engineering**
+
+The repository is being developed incrementally.
+
+The initial monorepo structure, frontend foundation, backend foundation, architecture documentation, and repository contribution templates are being established.
+
+Document ingestion, multimodal retrieval, authentication, evidence verification, and multi-agent workflows remain part of the implementation roadmap.
+
+The capabilities described above represent the intended product scope, not a claim that they are already operational.
+
+## Development Roadmap
+
+| Phase | Focus |
+|---|---|
+| 01 | Monorepo and application foundations |
+| 02 | Backend architecture and shared contracts |
+| 03 | Authentication, workspaces and authorization |
+| 04 | Document ingestion and extraction |
+| 05 | Hybrid retrieval and reranking |
+| 06 | Evidence-grounded answer generation |
+| 07 | Multi-agent orchestration and verification |
+| 08 | Enterprise security, evaluation and optimization |
+
+## Contributing
+
+VeriCore AI is currently under active development.
+
+Bug reports, improvement proposals, and technical discussions can be organized through GitHub Issues and Pull Requests.
+
+Please review the repository's contribution templates before submitting changes.
+
+## Project
+
+**Maintained by:** [whiffCODE](https://github.com/whiffCODE)
+
+**Repository:** [github.com/whiffCODE/VeriCore-AI](https://github.com/whiffCODE/VeriCore-AI)
+
+**Product:** VeriCore AI 3.0
+
+**Tagline:** Evidence before answers.
+
+## License
+
+All rights reserved.
+
+No license has been granted for redistribution, modification, or commercial use. See the repository ownership and licensing terms before reusing any project material.
