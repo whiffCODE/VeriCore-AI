@@ -1,3 +1,30 @@
+<<<<<<< HEAD
+=======
+
+<p align="center">
+  <img
+    src="https://res.cloudinary.com/fdwexjk4/image/upload/v1794724304/VeriCore_AI_icon-removebg-preview.png"
+    alt="VeriCore AI official logo"
+    width="110"
+  />
+</p>
+
+<h1 align="center">VeriCore AI 3.0</h1>
+
+<p align="center">
+  <strong>Multimodal Enterprise Knowledge Intelligence & Multi-Agent SOP Platform</strong>
+</p>
+
+<p align="center">
+  <em>Evidence before answers.</em>
+</p>
+
+<p align="center">
+  Understand complex documents. Retrieve connected knowledge.
+  Generate answers grounded in verifiable evidence.
+</p>
+
+>>>>>>> 2d2ddcd (docs: add architecture and repository contribution templates)
 # VeriCore AI 3.0
 
 ### Multimodal Enterprise Knowledge Intelligence & Multi-Agent SOP Platform
@@ -81,3 +108,67 @@ VeriCore AI is maintained by [whiffCODE](https://github.com/whiffCODE).
 ## License
 
 All rights reserved. No license has been granted for redistribution or commercial use.
+
+
+
+## Architecture at a Glance
+
+VeriCore AI follows a modular architecture with a dedicated web
+application, application API, and Python-based AI service.
+
+See [Architecture Documentation](docs/architecture.md) for
+component responsibilities, data flow, and security boundaries.
+
+```mermaid
+flowchart LR
+    USER["Users"]
+    WEB["Next.js Web"]
+    API["Express API"]
+    AI["Python AI Service"]
+    DB[("MongoDB")]
+    VECTOR[("Qdrant")]
+    STORAGE[("Document Storage")]
+
+    USER --> WEB
+    WEB --> API
+    API --> AI
+    API <--> DB
+    AI <--> VECTOR
+    API <--> STORAGE
+    AI <--> STORAGE
+```
+
+## Repository Structure
+
+```text
+VeriCore-AI/
+├── apps/
+│   ├── web/                 # Next.js frontend
+│   └── api/                 # Express application API
+├── services/
+│   └── ai/                  # Python AI service
+├── packages/
+│   └── contracts/           # Shared TypeScript contracts
+├── infrastructure/
+│   ├── docker/
+│   └── scripts/
+├── tests/
+│   ├── integration/
+│   ├── e2e/
+│   └── evaluation/
+├── docs/
+│   └── architecture.md
+└── .github/
+    ├── ISSUE_TEMPLATE/
+    └── PULL_REQUEST_TEMPLATE.md
+```
+
+## Project Principles
+
+- Evidence before generation
+- Multimodal document understanding
+- Verifiable source citations
+- Security and tenant isolation
+- Responsible AI and uncertainty handling
+- Modular, testable engineering
+

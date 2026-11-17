@@ -1,0 +1,62 @@
+
+name: Feature request
+description: Propose an improvement or new capability.
+title: "[Feature]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem first, then the proposed solution.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem should this feature solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the expected behaviour.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Product area
+      options:
+        - Document understanding
+        - Multimodal retrieval
+        - Evidence and citations
+        - Knowledge chat
+        - Multi-agent workflows
+        - Workspace management
+        - Security and administration
+        - Developer experience
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any alternative approaches.
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How can we determine that this feature is complete?
+      placeholder: |
+        - [ ] Criterion one
+        - [ ] Criterion two
+    validations:
+      required: false
