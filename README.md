@@ -2,7 +2,7 @@
   <img
     src="https://res.cloudinary.com/fdwexjk4/image/upload/v1794942018/vericore-ai-github-social-preview-1280x640.png"
     alt="VeriCore AI official logo"
-    width="110"
+    width="800"
   />
 </p>
 
