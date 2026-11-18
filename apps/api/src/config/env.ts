@@ -26,6 +26,10 @@ if (
   );
 }
 
+const frontendOrigin =
+  process.env.FRONTEND_ORIGIN ||
+  "http://localhost:3000";
+
 export const env = {
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: Number(process.env.PORT) || 4000,
@@ -34,4 +38,5 @@ export const env = {
   ACCESS_TOKEN_TTL:
     process.env.ACCESS_TOKEN_TTL || "10m",
   REFRESH_TOKEN_DAYS: refreshTokenDays,
+  FRONTEND_ORIGIN: frontendOrigin,
 } as const;

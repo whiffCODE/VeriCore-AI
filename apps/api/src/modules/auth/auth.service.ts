@@ -5,15 +5,32 @@ import { randomBytes } from "node:crypto";
 import { UserModel } from "../../models/user.model.js";
 import { OrganisationModel } from "../../models/organisation.model.js";
 import { MembershipModel } from "../../models/membership.model.js";
+import { RefreshTokenModel } from "../../models/refresh-token.model.js";
 
-import { hashPassword, verifyPassword } from "../../utils/password.js";
+import {
+  hashPassword,
+  verifyPassword,
+} from "../../utils/password.js";
+
 import { createAccessToken } from "../../utils/auth-token.js";
 import { AppError } from "../../utils/app-error.js";
+
+import {
+  generateRefreshToken,
+  generateTokenFamilyId,
+  hashRefreshToken,
+} from "../../utils/refresh-token.js";
+
+import { env } from "../../config/env.js";
 
 import type {
   RegisterInput,
   LoginInput,
 } from "./auth.validation.js";
+
+// --------------------------------------------------
+// Organisation utilities
+// --------------------------------------------------
 
 function createOrganisationSlug(name: string): string {
   const base = name
@@ -29,9 +46,7 @@ function createOrganisationSlug(name: string): string {
   return `${base || "organisation"}-${suffix}`;
 }
 
-function isDuplicateKeyError(
-  error: unknown,
-): boolean {
+function isDuplicateKeyError(error: unknown): boolean {
   return (
     typeof error === "object" &&
     error !== null &&
@@ -39,6 +54,34 @@ function isDuplicateKeyError(
     error.code === 11000
   );
 }
+
+// --------------------------------------------------
+// Refresh-token utilities
+// --------------------------------------------------
+
+async function createRefreshSession(
+  userId: Types.ObjectId,
+) {
+  const rawToken = generateRefreshToken();
+
+  const expiresAt = new Date(
+    Date.now() +
+      env.REFRESH_TOKEN_DAYS * 24 * 60 * 60 * 1000,
+  );
+
+  await RefreshTokenModel.create({
+    userId,
+    tokenHash: hashRefreshToken(rawToken),
+    familyId: generateTokenFamilyId(),
+    expiresAt,
+  });
+
+  return rawToken;
+}
+
+// --------------------------------------------------
+// Registration
+// --------------------------------------------------
 
 export async function registerUser(
   input: RegisterInput,
@@ -120,6 +163,10 @@ export async function registerUser(
     createdUserId.toString(),
   );
 
+  const refreshToken = await createRefreshSession(
+    createdUserId,
+  );
+
   return {
     user: {
       id: createdUserId.toString(),
@@ -131,10 +178,15 @@ export async function registerUser(
       name: input.organisationName,
     },
     accessToken,
+    refreshToken,
     tokenType: "Bearer",
     expiresIn: 600,
   };
 }
+
+// --------------------------------------------------
+// Login
+// --------------------------------------------------
 
 export async function loginUser(
   input: LoginInput,
@@ -176,6 +228,10 @@ export async function loginUser(
     user._id.toString(),
   );
 
+  const refreshToken = await createRefreshSession(
+    user._id,
+  );
+
   return {
     user: {
       id: user._id.toString(),
@@ -183,16 +239,24 @@ export async function loginUser(
       email: user.email,
     },
     accessToken,
+    refreshToken,
     tokenType: "Bearer",
     expiresIn: 600,
   };
 }
 
+// --------------------------------------------------
+// Current authenticated user
+// --------------------------------------------------
 
-
-export async function getCurrentUser(userId: string) {
+export async function getCurrentUser(
+  userId: string,
+) {
   if (!Types.ObjectId.isValid(userId)) {
-    throw new AppError(401, "Invalid user identity.");
+    throw new AppError(
+      401,
+      "Invalid user identity.",
+    );
   }
 
   const user = await UserModel.findById(userId).select(
@@ -254,4 +318,220 @@ export async function getCurrentUser(userId: string) {
     },
     organisations,
   };
+}
+
+// --------------------------------------------------
+// Refresh-token rotation
+// --------------------------------------------------
+
+
+type RefreshTransactionResult =
+  | { outcome: "success"; userId: Types.ObjectId }
+  | { outcome: "reused" }
+  | { outcome: "invalid" }
+  | { outcome: "unavailable" };
+
+export async function refreshUserSession(
+  rawToken: string,
+) {
+  const tokenHash = hashRefreshToken(rawToken);
+  const now = new Date();
+
+  const session = await mongoose.startSession();
+
+  const newRawToken = generateRefreshToken();
+  const newTokenHash = hashRefreshToken(newRawToken);
+
+  let result: RefreshTransactionResult;
+
+  try {
+    const transactionResult =
+      await session.withTransaction<RefreshTransactionResult>(
+        async () => {
+          const existingToken =
+            await RefreshTokenModel.findOneAndUpdate(
+              {
+                tokenHash,
+                revokedAt: null,
+                expiresAt: { $gt: now },
+              },
+              {
+                $set: {
+                  revokedAt: now,
+                  lastUsedAt: now,
+                },
+              },
+              {
+                new: false,
+                session,
+              },
+            );
+
+          if (!existingToken) {
+            const previousToken =
+              await RefreshTokenModel.findOne({
+                tokenHash,
+              }).session(session);
+
+            if (previousToken?.revokedAt) {
+              await RefreshTokenModel.updateMany(
+                {
+                  familyId: previousToken.familyId,
+                  revokedAt: null,
+                },
+                {
+                  $set: { revokedAt: now },
+                },
+                { session },
+              );
+
+              return { outcome: "reused" };
+            }
+
+            return { outcome: "invalid" };
+          }
+
+          const user = await UserModel.findById(
+            existingToken.userId,
+          ).session(session);
+
+          if (!user || user.status !== "active") {
+            await RefreshTokenModel.updateMany(
+              {
+                familyId: existingToken.familyId,
+                revokedAt: null,
+              },
+              {
+                $set: { revokedAt: now },
+              },
+              { session },
+            );
+
+            return { outcome: "unavailable" };
+          }
+
+          const activeMembership =
+            await MembershipModel.exists({
+              userId: user._id,
+              status: "active",
+            }).session(session);
+
+          if (!activeMembership) {
+            await RefreshTokenModel.updateMany(
+              {
+                familyId: existingToken.familyId,
+                revokedAt: null,
+              },
+              {
+                $set: { revokedAt: now },
+              },
+              { session },
+            );
+
+            return { outcome: "unavailable" };
+          }
+
+          const expiresAt = new Date(
+            Date.now() +
+              env.REFRESH_TOKEN_DAYS *
+                24 *
+                60 *
+                60 *
+                1000,
+          );
+
+          await RefreshTokenModel.create(
+            [
+              {
+                userId: user._id,
+                tokenHash: newTokenHash,
+                familyId: existingToken.familyId,
+                expiresAt,
+              },
+            ],
+            { session },
+          );
+
+          await RefreshTokenModel.updateOne(
+            { _id: existingToken._id },
+            {
+              $set: {
+                replacedByTokenHash: newTokenHash,
+              },
+            },
+            { session },
+          );
+
+          return {
+            outcome: "success",
+            userId: user._id,
+          };
+        },
+      );
+
+    if (!transactionResult) {
+      throw new AppError(
+        500,
+        "Refresh-token transaction returned no result.",
+      );
+    }
+
+    result = transactionResult;
+  } finally {
+    await session.endSession();
+  }
+
+  if (result.outcome === "reused") {
+    throw new AppError(
+      401,
+      "Refresh token reuse detected. Please log in again.",
+    );
+  }
+
+  if (result.outcome === "unavailable") {
+    throw new AppError(
+      401,
+      "User session is unavailable.",
+    );
+  }
+
+  if (result.outcome !== "success") {
+    throw new AppError(
+      401,
+      "Refresh token is invalid, expired or revoked.",
+    );
+  }
+
+  const accessToken = await createAccessToken(
+    result.userId.toString(),
+  );
+
+  return {
+    accessToken,
+    refreshToken: newRawToken,
+    tokenType: "Bearer" as const,
+    expiresIn: 600,
+  };
+}
+
+// --------------------------------------------------
+// Logout and session revocation
+// --------------------------------------------------
+
+export async function revokeRefreshSession(
+  rawToken: string,
+) {
+  const tokenHash = hashRefreshToken(rawToken);
+
+  await RefreshTokenModel.updateOne(
+    {
+      tokenHash,
+      revokedAt: null,
+    },
+    {
+      $set: {
+        revokedAt: new Date(),
+      },
+    },
+  );
 }
