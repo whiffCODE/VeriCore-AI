@@ -1,4 +1,7 @@
+
 import type { ErrorRequestHandler } from "express";
+
+import { AppError } from "../utils/app-error.js";
 
 export const errorHandler: ErrorRequestHandler = (
   error,
@@ -6,22 +9,24 @@ export const errorHandler: ErrorRequestHandler = (
   res,
   _next,
 ) => {
-  const statusCode =
-    typeof error.statusCode === "number" ? error.statusCode : 500;
+  if (error instanceof AppError) {
+    res.status(error.statusCode).json({
+      success: false,
+      error: {
+        message: error.message,
+        ...(error.details ? { details: error.details } : {}),
+      },
+    });
 
-  const message =
-    statusCode === 500
-      ? "An unexpected server error occurred."
-      : error.message;
-
-  if (statusCode >= 500) {
-    console.error(error);
+    return;
   }
 
-  res.status(statusCode).json({
+  console.error("Unexpected server error:", error);
+
+  res.status(500).json({
     success: false,
     error: {
-      message,
+      message: "An unexpected server error occurred.",
     },
   });
 };

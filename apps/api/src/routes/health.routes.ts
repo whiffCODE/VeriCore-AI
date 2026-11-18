@@ -1,9 +1,11 @@
+
 import { Router } from "express";
+import { HealthResponseSchema } from "@vericore/contracts";
 
 const router = Router();
 
 router.get("/", (_req, res) => {
-  res.status(200).json({
+  const response = HealthResponseSchema.parse({
     success: true,
     data: {
       status: "healthy",
@@ -12,6 +14,8 @@ router.get("/", (_req, res) => {
       timestamp: new Date().toISOString(),
     },
   });
+
+  res.status(200).json(response);
 });
 
 export default router;

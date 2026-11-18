@@ -2,22 +2,41 @@ import "dotenv/config";
 
 import app from "./app.js";
 import { env } from "./config/env.js";
+import {
+  connectDatabase,
+  disconnectDatabase,
+} from "./config/database.js";
 
-const server = app.listen(env.PORT, () => {
-  console.log(
-    `VeriCore API running at http://localhost:${env.PORT}`,
-  );
-  console.log(`Environment: ${env.NODE_ENV}`);
-});
+async function startServer(): Promise<void> {
+  await connectDatabase();
 
-const shutdown = (signal: string) => {
-  console.log(`${signal} received. Shutting down server...`);
-
-  server.close(() => {
-    console.log("VeriCore API server closed.");
-    process.exit(0);
+  const server = app.listen(env.PORT, () => {
+    console.log(
+      `VeriCore API running at http://localhost:${env.PORT}`,
+    );
+    console.log(`Environment: ${env.NODE_ENV}`);
   });
-};
 
-process.on("SIGINT", () => shutdown("SIGINT"));
-process.on("SIGTERM", () => shutdown("SIGTERM"));
+  const shutdown = (signal: string) => {
+    console.log(`${signal} received. Shutting down...`);
+
+    server.close(async () => {
+      try {
+        await disconnectDatabase();
+        console.log("VeriCore API shutdown complete.");
+        process.exit(0);
+      } catch (error) {
+        console.error("Shutdown failed:", error);
+        process.exit(1);
+      }
+    });
+  };
+
+  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+}
+
+startServer().catch((error) => {
+  console.error("Application startup failed:", error);
+  process.exit(1);
+});
