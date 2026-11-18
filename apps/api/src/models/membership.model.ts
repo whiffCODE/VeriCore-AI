@@ -1,5 +1,9 @@
 
-import mongoose, { Schema, type InferSchemaType } from "mongoose";
+import mongoose, {
+  type InferSchemaType,
+} from "mongoose";
+
+const { Schema } = mongoose;
 
 const membershipSchema = new Schema(
   {
@@ -7,48 +11,64 @@ const membershipSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      immutable: true,
     },
 
-    workspaceId: {
+    organisationId: {
       type: Schema.Types.ObjectId,
-      ref: "Workspace",
+      ref: "Organisation",
       required: true,
-      immutable: true,
     },
 
     role: {
       type: String,
       enum: ["owner", "admin", "member", "viewer"],
+      default: "member",
       required: true,
     },
 
     status: {
       type: String,
-      enum: ["active", "invited", "suspended"],
+      enum: ["invited", "active", "suspended"],
       default: "active",
       required: true,
+    },
+
+    invitedBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    joinedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   {
     timestamps: true,
     versionKey: false,
-    strict: "throw",
   },
 );
 
 membershipSchema.index(
-  { workspaceId: 1, userId: 1 },
+  { userId: 1, organisationId: 1 },
   { unique: true },
 );
 
-membershipSchema.index({ userId: 1, status: 1 });
+membershipSchema.index({
+  organisationId: 1,
+  role: 1,
+  status: 1,
+});
 
-membershipSchema.index({ workspaceId: 1, role: 1, status: 1 });
+membershipSchema.index({
+  userId: 1,
+  status: 1,
+});
 
-export type MembershipDocument =
+export type Membership =
   InferSchemaType<typeof membershipSchema>;
 
-export const Membership =
+export const MembershipModel =
   mongoose.models.Membership ||
   mongoose.model("Membership", membershipSchema);
