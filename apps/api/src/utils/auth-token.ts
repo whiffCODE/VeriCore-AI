@@ -11,6 +11,9 @@ const secret = new TextEncoder().encode(
   env.JWT_SECRET,
 );
 
+const ISSUER = "vericore-api";
+const AUDIENCE = "vericore-client";
+
 export async function createAccessToken(
   userId: string,
 ): Promise<string> {
@@ -22,8 +25,8 @@ export async function createAccessToken(
       typ: "JWT",
     })
     .setSubject(userId)
-    .setIssuer("vericore-api")
-    .setAudience("vericore-client")
+    .setIssuer(ISSUER)
+    .setAudience(AUDIENCE)
     .setIssuedAt()
     .setExpirationTime(env.ACCESS_TOKEN_TTL)
     .sign(secret);
@@ -32,13 +35,18 @@ export async function createAccessToken(
 export async function verifyAccessToken(
   token: string,
 ): Promise<JWTPayload> {
-  const { payload } = await jwtVerify(token, secret, {
-    algorithms: ["HS256"],
-    issuer: "vericore-api",
-    audience: "vericore-client",
-  });
+  const { payload, protectedHeader } = await jwtVerify(
+    token,
+    secret,
+    {
+      issuer: ISSUER,
+      audience: AUDIENCE,
+      algorithms: ["HS256"],
+    },
+  );
 
   if (
+    protectedHeader.typ !== "JWT" ||
     payload.tokenType !== "access" ||
     typeof payload.sub !== "string"
   ) {

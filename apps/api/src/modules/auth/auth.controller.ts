@@ -1,6 +1,8 @@
 
 import type { RequestHandler } from "express";
 
+import { AppError } from "../../utils/app-error.js";
+
 import {
   registerUser,
   loginUser,
@@ -10,6 +12,8 @@ import type {
   RegisterInput,
   LoginInput,
 } from "./auth.validation.js";
+
+import { getCurrentUser } from "./auth.service.js";
 
 export const registerController: RequestHandler =
   async (_req, res, next) => {
@@ -42,6 +46,31 @@ export const loginController: RequestHandler =
       res.status(200).json({
         success: true,
         message: "Login successful.",
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  
+
+export const currentUserController: RequestHandler =
+  async (req, res, next) => {
+    try {
+      if (!req.auth) {
+        throw new AppError(
+          401,
+          "Authentication required.",
+        );
+      }
+
+      const result = await getCurrentUser(
+        req.auth.userId,
+      );
+
+      res.status(200).json({
+        success: true,
         data: result,
       });
     } catch (error) {

@@ -3,6 +3,8 @@ import { Router } from "express";
 
 import { validateRequest } from "../../middleware/validate.middleware.js";
 
+import { requireAuth } from "../../middleware/auth.middleware.js";
+
 import {
   registerSchema,
   loginSchema,
@@ -11,6 +13,7 @@ import {
 import {
   registerController,
   loginController,
+  currentUserController
 } from "./auth.controller.js";
 
 const router = Router();
@@ -29,6 +32,12 @@ router.post(
     body: loginSchema,
   }),
   loginController,
+);
+
+router.get(
+  "/me",
+  requireAuth,
+  currentUserController,
 );
 
 export default router;

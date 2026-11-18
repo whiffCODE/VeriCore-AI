@@ -187,3 +187,71 @@ export async function loginUser(
     expiresIn: 600,
   };
 }
+
+
+
+export async function getCurrentUser(userId: string) {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new AppError(401, "Invalid user identity.");
+  }
+
+  const user = await UserModel.findById(userId).select(
+    "name email status emailVerifiedAt createdAt",
+  );
+
+  if (!user || user.status !== "active") {
+    throw new AppError(
+      401,
+      "User account is unavailable.",
+    );
+  }
+
+  const memberships = await MembershipModel.find({
+    userId: user._id,
+    status: "active",
+  })
+    .populate({
+      path: "organisationId",
+      select: "name slug status",
+    })
+    .lean();
+
+  const organisations = memberships
+    .filter(
+      (membership) =>
+        membership.organisationId &&
+        typeof membership.organisationId === "object" &&
+        "name" in membership.organisationId,
+    )
+    .map((membership) => {
+      const organisation = membership.organisationId as {
+        _id: Types.ObjectId;
+        name: string;
+        slug: string;
+        status: string;
+      };
+
+      return {
+        id: organisation._id.toString(),
+        name: organisation.name,
+        slug: organisation.slug,
+        status: organisation.status,
+        role: membership.role,
+      };
+    })
+    .filter(
+      (organisation) => organisation.status === "active",
+    );
+
+  return {
+    user: {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      status: user.status,
+      emailVerifiedAt: user.emailVerifiedAt,
+      createdAt: user.createdAt,
+    },
+    organisations,
+  };
+}
