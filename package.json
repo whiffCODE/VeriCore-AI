@@ -14,10 +14,11 @@
     "build:web": "npm run build --workspace=@vericore/web",
     "build:api": "npm run build --workspace=@vericore/api",
     "test:api": "npm run test --workspace=@vericore/api",
-    "build:contracts": "npm run build --workspace=@vericore/contracts"
+    "build:contracts": "npm run build --workspace=@vericore/contracts",
+    "test": "vitest run --config ../../vitest.config.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3"
   }
 }

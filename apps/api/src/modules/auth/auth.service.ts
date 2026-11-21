@@ -1,11 +1,17 @@
 
 import mongoose, { Types } from "mongoose";
-import { randomBytes } from "node:crypto";
+import {
+  randomBytes,
+  createHash,
+} from "node:crypto";
 
 import { UserModel } from "../../models/user.model.js";
 import { OrganisationModel } from "../../models/organisation.model.js";
 import { MembershipModel } from "../../models/membership.model.js";
 import { RefreshTokenModel } from "../../models/refresh-token.model.js";
+import {
+  EmailVerificationGrantModel,
+} from "../../models/email-verification-grant.model.js";
 
 import {
   hashPassword,
@@ -46,6 +52,12 @@ function createOrganisationSlug(name: string): string {
   return `${base || "organisation"}-${suffix}`;
 }
 
+function hashVerificationGrant(token: string): string {
+  return createHash("sha256")
+    .update(token)
+    .digest("hex");
+}
+
 function isDuplicateKeyError(error: unknown): boolean {
   return (
     typeof error === "object" &&
@@ -54,15 +66,13 @@ function isDuplicateKeyError(error: unknown): boolean {
     error.code === 11000
   );
 }
-
 // --------------------------------------------------
 // Refresh-token utilities
 // --------------------------------------------------
 
-async function createRefreshSession(
-  userId: Types.ObjectId,
-) {
+async function createRefreshSession(userId: Types.ObjectId) {
   const rawToken = generateRefreshToken();
+  const familyId = generateTokenFamilyId();
 
   const expiresAt = new Date(
     Date.now() +
@@ -72,23 +82,31 @@ async function createRefreshSession(
   await RefreshTokenModel.create({
     userId,
     tokenHash: hashRefreshToken(rawToken),
-    familyId: generateTokenFamilyId(),
+    familyId,
     expiresAt,
   });
 
-  return rawToken;
+  return {
+    rawToken,
+    familyId,
+  };
 }
 
 // --------------------------------------------------
 // Registration
 // --------------------------------------------------
 
-export async function registerUser(
-  input: RegisterInput,
-) {
-  const passwordHash = await hashPassword(
-    input.password,
+
+export async function registerUser(input: RegisterInput) {
+  const normalizedEmail = input.email.trim().toLowerCase();
+
+  // Hash the supplied verification grant.
+  const verificationTokenHash = hashVerificationGrant(
+    input.verificationToken,
   );
+
+  // Hash the password before opening the transaction.
+  const passwordHash = await hashPassword(input.password);
 
   const session = await mongoose.startSession();
 
@@ -97,31 +115,81 @@ export async function registerUser(
 
   try {
     await session.withTransaction(async () => {
+      const now = new Date();
+
+      // ------------------------------------------------
+      // 1. Atomically consume the verification grant.
+      // ------------------------------------------------
+
+      const verificationGrant =
+        await EmailVerificationGrantModel.findOneAndUpdate(
+          {
+            email: normalizedEmail,
+            purpose: "registration",
+            tokenHash: verificationTokenHash,
+            consumedAt: null,
+            expiresAt: { $gt: now },
+          },
+          {
+            $set: {
+              consumedAt: now,
+            },
+          },
+          {
+            new: true,
+            session,
+          },
+        );
+
+      if (!verificationGrant) {
+        throw new AppError(
+          400,
+          "Email verification is required or the verification grant has expired.",
+        );
+      }
+
+      // ------------------------------------------------
+      // 2. Create verified user.
+      // ------------------------------------------------
+
       const [user] = await UserModel.create(
         [
           {
             name: input.name,
-            email: input.email,
+            email: normalizedEmail,
             passwordHash,
+
+            platformRole: "user",
+
             status: "active",
+            emailVerifiedAt: now,
           },
         ],
         { session },
       );
 
-      const [organisation] = await OrganisationModel.create(
-        [
-          {
-            name: input.organisationName,
-            slug: createOrganisationSlug(
-              input.organisationName,
-            ),
-            createdBy: user._id,
-            status: "active",
-          },
-        ],
-        { session },
-      );
+      // ------------------------------------------------
+      // 3. Create initial organisation.
+      // ------------------------------------------------
+
+      const [organisation] =
+        await OrganisationModel.create(
+          [
+            {
+              name: input.organisationName,
+              slug: createOrganisationSlug(
+                input.organisationName,
+              ),
+              createdBy: user._id,
+              status: "active",
+            },
+          ],
+          { session },
+        );
+
+      // ------------------------------------------------
+      // 4. Create owner membership.
+      // ------------------------------------------------
 
       await MembershipModel.create(
         [
@@ -130,7 +198,7 @@ export async function registerUser(
             organisationId: organisation._id,
             role: "owner",
             status: "active",
-            joinedAt: new Date(),
+            joinedAt: now,
           },
         ],
         { session },
@@ -159,38 +227,46 @@ export async function registerUser(
     );
   }
 
-  const accessToken = await createAccessToken(
-    createdUserId.toString(),
+  // --------------------------------------------------
+  // 5. Create authenticated session.
+  // --------------------------------------------------
+
+  const sessionData = await createRefreshSession(
+    createdUserId,
   );
 
-  const refreshToken = await createRefreshSession(
-    createdUserId,
+  const accessToken = await createAccessToken(
+    createdUserId.toString(),
+    sessionData.familyId,
   );
 
   return {
     user: {
       id: createdUserId.toString(),
       name: input.name,
-      email: input.email,
+      email: normalizedEmail,
+      emailVerified: true,
+      platformRole: "user",
     },
+
     organisation: {
       id: createdOrganisationId.toString(),
       name: input.organisationName,
     },
+
     accessToken,
-    refreshToken,
+    refreshToken: sessionData.rawToken,
     tokenType: "Bearer",
     expiresIn: 600,
   };
 }
 
+
 // --------------------------------------------------
 // Login
 // --------------------------------------------------
 
-export async function loginUser(
-  input: LoginInput,
-) {
+export async function loginUser(input: LoginInput) {
   const user = await UserModel.findOne({
     email: input.email,
   }).select("+passwordHash");
@@ -224,12 +300,12 @@ export async function loginUser(
   user.lastLoginAt = new Date();
   await user.save();
 
+  // Each login creates an independent session.
+  const sessionData = await createRefreshSession(user._id);
+
   const accessToken = await createAccessToken(
     user._id.toString(),
-  );
-
-  const refreshToken = await createRefreshSession(
-    user._id,
+    sessionData.familyId,
   );
 
   return {
@@ -239,7 +315,7 @@ export async function loginUser(
       email: user.email,
     },
     accessToken,
-    refreshToken,
+    refreshToken: sessionData.rawToken,
     tokenType: "Bearer",
     expiresIn: 600,
   };
@@ -249,9 +325,7 @@ export async function loginUser(
 // Current authenticated user
 // --------------------------------------------------
 
-export async function getCurrentUser(
-  userId: string,
-) {
+export async function getCurrentUser(userId: string) {
   if (!Types.ObjectId.isValid(userId)) {
     throw new AppError(
       401,
@@ -324,16 +398,17 @@ export async function getCurrentUser(
 // Refresh-token rotation
 // --------------------------------------------------
 
-
 type RefreshTransactionResult =
-  | { outcome: "success"; userId: Types.ObjectId }
+  | {
+      outcome: "success";
+      userId: Types.ObjectId;
+      familyId: string;
+    }
   | { outcome: "reused" }
   | { outcome: "invalid" }
   | { outcome: "unavailable" };
 
-export async function refreshUserSession(
-  rawToken: string,
-) {
+export async function refreshUserSession(rawToken: string) {
   const tokenHash = hashRefreshToken(rawToken);
   const now = new Date();
 
@@ -342,7 +417,7 @@ export async function refreshUserSession(
   const newRawToken = generateRefreshToken();
   const newTokenHash = hashRefreshToken(newRawToken);
 
-  let result: RefreshTransactionResult;
+  let result: RefreshTransactionResult | undefined;
 
   try {
     const transactionResult =
@@ -465,6 +540,7 @@ export async function refreshUserSession(
           return {
             outcome: "success",
             userId: user._id,
+            familyId: existingToken.familyId,
           };
         },
       );
@@ -504,6 +580,7 @@ export async function refreshUserSession(
 
   const accessToken = await createAccessToken(
     result.userId.toString(),
+    result.familyId,
   );
 
   return {
@@ -518,9 +595,7 @@ export async function refreshUserSession(
 // Logout and session revocation
 // --------------------------------------------------
 
-export async function revokeRefreshSession(
-  rawToken: string,
-) {
+export async function revokeRefreshSession(rawToken: string) {
   const tokenHash = hashRefreshToken(rawToken);
 
   await RefreshTokenModel.updateOne(
@@ -534,4 +609,110 @@ export async function revokeRefreshSession(
       },
     },
   );
+}
+
+// --------------------------------------------------
+// Session management
+// --------------------------------------------------
+
+export async function listUserSessions(
+  userId: string,
+  currentSessionId: string,
+) {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new AppError(401, "Invalid user identity.");
+  }
+
+  const sessions = await RefreshTokenModel.aggregate([
+    {
+      $match: {
+        userId: new Types.ObjectId(userId),
+        expiresAt: { $gt: new Date() },
+      },
+    },
+    {
+      $group: {
+        _id: "$familyId",
+        createdAt: { $min: "$createdAt" },
+        lastUsedAt: { $max: "$lastUsedAt" },
+        expiresAt: { $max: "$expiresAt" },
+        activeTokenCount: {
+          $sum: {
+            $cond: [
+              { $eq: ["$revokedAt", null] },
+              1,
+              0,
+            ],
+          },
+        },
+      },
+    },
+    {
+      $match: {
+        activeTokenCount: { $gt: 0 },
+      },
+    },
+    {
+      $sort: {
+        lastUsedAt: -1,
+        createdAt: -1,
+      },
+    },
+  ]);
+
+  return sessions.map((session) => ({
+    sessionId: session._id,
+    createdAt: session.createdAt,
+    lastUsedAt: session.lastUsedAt,
+    expiresAt: session.expiresAt,
+    isCurrent: session._id === currentSessionId,
+  }));
+}
+
+export async function revokeUserSession(
+  userId: string,
+  sessionId: string,
+) {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new AppError(401, "Invalid user identity.");
+  }
+
+  const result = await RefreshTokenModel.updateMany(
+    {
+      userId: new Types.ObjectId(userId),
+      familyId: sessionId,
+      revokedAt: null,
+    },
+    {
+      $set: {
+        revokedAt: new Date(),
+      },
+    },
+  );
+
+  return result.modifiedCount > 0;
+}
+
+export async function revokeAllUserSessions(
+  userId: string,
+) {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new AppError(401, "Invalid user identity.");
+  }
+
+  const result = await RefreshTokenModel.updateMany(
+    {
+      userId: new Types.ObjectId(userId),
+      revokedAt: null,
+    },
+    {
+      $set: {
+        revokedAt: new Date(),
+      },
+    },
+  );
+
+  return {
+    revokedSessions: result.modifiedCount,
+  };
 }

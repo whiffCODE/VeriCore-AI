@@ -14,11 +14,14 @@ const secret = new TextEncoder().encode(
 const ISSUER = "vericore-api";
 const AUDIENCE = "vericore-client";
 
+
 export async function createAccessToken(
   userId: string,
+  sessionId: string,
 ): Promise<string> {
   return new SignJWT({
     tokenType: "access",
+    sid: sessionId,
   })
     .setProtectedHeader({
       alg: "HS256",
@@ -31,6 +34,7 @@ export async function createAccessToken(
     .setExpirationTime(env.ACCESS_TOKEN_TTL)
     .sign(secret);
 }
+
 
 export async function verifyAccessToken(
   token: string,
@@ -46,12 +50,13 @@ export async function verifyAccessToken(
   );
 
   if (
-    protectedHeader.typ !== "JWT" ||
-    payload.tokenType !== "access" ||
-    typeof payload.sub !== "string"
-  ) {
-    throw new Error("Invalid access token.");
-  }
+  protectedHeader.typ !== "JWT" ||
+  payload.tokenType !== "access" ||
+  typeof payload.sub !== "string" ||
+  typeof payload.sid !== "string"
+) {
+  throw new Error("Invalid access token.");
+}
 
   return payload;
 }

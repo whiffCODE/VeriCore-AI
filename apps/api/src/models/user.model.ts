@@ -30,6 +30,15 @@ const userSchema = new Schema(
       select: false,
     },
 
+    // Platform-wide access level.
+    // Public registration always receives "user".
+    platformRole: {
+      type: String,
+      enum: ["user", "super_admin"],
+      default: "user",
+      required: true,
+    },
+
     status: {
       type: String,
       enum: ["pending", "active", "suspended"],
@@ -53,8 +62,7 @@ const userSchema = new Schema(
   },
 );
 
-
-export type User = mongoose.InferSchemaType<
+export type User = InferSchemaType<
   typeof userSchema
 >;
 
